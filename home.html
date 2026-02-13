@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iGEM Tec CEM - Home</title>
+    <style>
+        :root { --igem-blue: #00a0e3; --igem-green: #7dc242; --dark-blue: #003366; }
+        body { font-family: 'Segoe UI', sans-serif; background: radial-gradient(circle, #fdfcfb 0%, #e2d1c3 100%); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 90%; }
+        .heart { font-size: 50px; animation: pulse 1.5s infinite; margin-bottom: 10px; }
+        @keyframes pulse { 0%, 100% {transform: scale(1);} 50% {transform: scale(1.1);} }
+        .btn-quiz { background: linear-gradient(135deg, var(--igem-blue), var(--igem-green)); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; text-decoration: none; display: inline-block; box-sizing: border-box; }
+        .search-container { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        input { padding: 12px; border: 2px solid #ddd; border-radius: 10px 0 0 10px; outline: none; width: 60%; }
+        .btn-search { padding: 12px; border: none; background: var(--dark-blue); color: white; border-radius: 0 10px 10px 0; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="heart">🧬❤️</div>
+        <h1 style="color: var(--dark-blue); margin-bottom: 0;">Bio-Registro</h1>
+        <p style="color: var(--igem-green); font-weight: bold; margin-top: 5px;">iGEM Tec CEM</p>
+        <p>¿Listos para descubrir su compatibilidad molecular?</p>
+        
+        <a href="quiz.html" class="btn-quiz">Secuenciar Amor</a>
+
+        <div class="search-container">
+            <p style="font-size: 14px; color: #666;">¿Ya tienen su ID de Muestra?</p>
+            <input type="text" id="idInput" placeholder="Ej: IGEM-1234">
+            <button class="btn-search" id="btnBuscar">Buscar</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBs4WUbWXBikEfdAPTwOzmmA_J8HVqMx6o",
+            authDomain: "igem-teccem.firebaseapp.com",
+            databaseURL: "https://igem-teccem-default-rtdb.firebaseio.com",
+            projectId: "igem-teccem",
+            storageBucket: "igem-teccem.firebasestorage.app",
+            messagingSenderId: "265782188525",
+            appId: "1:265782188525:web:d3cc43a6ea18badd006fe4",
+            measurementId: "G-6KHMF6Q0KM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        document.getElementById('btnBuscar').addEventListener('click', async () => {
+            const id = document.getElementById('idInput').value.trim().toUpperCase();
+            if(!id) return alert("Por favor introduce un ID válido.");
+
+            const snapshot = await get(ref(db, 'parejas/' + id));
+            if (snapshot.exists()) {
+                window.location.href = `resultados.html?id=${id}`;
+            } else {
+                alert("ID no encontrado en la base de datos molecular.");
+            }
+        });
+    </script>
+</body>
+</html>

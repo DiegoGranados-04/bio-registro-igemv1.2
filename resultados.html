@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados Bio-Registro - iGEM</title>
+    <style>
+        :root { --igem-blue: #00a0e3; --igem-green: #7dc242; --love-red: #ff4d6d; --dark-blue: #003366; }
+        body { font-family: 'Segoe UI', sans-serif; background: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; text-align: center; }
+        .card { width: 90%; max-width: 450px; padding: 40px; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 1px solid #eee; }
+        .percentage-circle { font-size: 60px; font-weight: bold; color: var(--igem-green); margin: 10px 0; font-variant-numeric: tabular-nums; }
+        .id-badge { background: #f0f0f0; padding: 8px 15px; font-family: 'Courier New', monospace; font-size: 18px; border-radius: 8px; color: #555; display: inline-block; margin-bottom: 20px; }
+        h1 { color: var(--dark-blue); margin: 10px 0; font-size: 24px; }
+        #desc { color: #666; line-height: 1.6; margin-bottom: 30px; }
+        .btn-home { text-decoration: none; color: var(--igem-blue); font-weight: bold; border: 2px solid var(--igem-blue); padding: 10px 25px; border-radius: 50px; transition: 0.3s; }
+        .btn-home:hover { background: var(--igem-blue); color: white; }
+        .loading-text { font-size: 14px; color: #999; text-transform: uppercase; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="loader">
+        <div class="loading-text">Secuenciando afinidad...</div>
+    </div>
+    
+    <div id="result-content" style="display: none;">
+        <p style="margin-bottom: 5px; color: #999;">Análisis de Compatibilidad</p>
+        <div class="percentage-circle" id="percentDisplay">0%</div>
+        <h1 id="statusTitle">----</h1>
+        <div class="id-badge" id="idDisplay">----</div>
+        <p id="desc">----</p>
+        <a href="home.html" class="btn-home">Nueva Muestra</a>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBs4WUbWXBikEfdAPTwOzmmA_J8HVqMx6o",
+        authDomain: "igem-teccem.firebaseapp.com",
+        databaseURL: "https://igem-teccem-default-rtdb.firebaseio.com",
+        projectId: "igem-teccem",
+        storageBucket: "igem-teccem.firebasestorage.app",
+        messagingSenderId: "265782188525",
+        appId: "1:265782188525:web:d3cc43a6ea18badd006fe4",
+        measurementId: "G-6KHMF6Q0KM"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+
+    async function fetchResult() {
+        if (!id) {
+            showError();
+            return;
+        }
+
+        const snapshot = await get(ref(db, 'parejas/' + id));
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            renderResult(data);
+        } else {
+            showError();
+        }
+    }
+
+    function renderResult(data) {
+        setTimeout(() => {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('result-content').style.display = 'block';
+            document.getElementById('idDisplay').innerText = id;
+            startCounter(data.percent);
+            setTexts(data.type);
+        }, 1200);
+    }
+
+    function showError() {
+        document.body.innerHTML = "<h1>ID no encontrado</h1><p>Regresa al inicio.</p><a href='home.html'>Volver</a>";
+    }
+
+    function startCounter(target) {
+        const display = document.getElementById('percentDisplay');
+        let current = 0;
+        const interval = setInterval(() => {
+            if (current >= target) {
+                clearInterval(interval);
+                display.innerText = target + "%";
+            } else {
+                current++;
+                display.innerText = current + "%";
+            }
+        }, 20);
+    }
+
+    function setTexts(type) {
+        const title = document.getElementById('statusTitle');
+        const desc = document.getElementById('desc');
+        if (type === 'A') {
+            title.innerText = "Simbiosis Perfecta";
+            desc.innerText = "Su compatibilidad molecular es extraordinaria. Sus fenotipos se complementan creando un ecosistema inquebrantable.";
+        } else if (type === 'B') {
+            title.innerText = "Reacción Exotérmica";
+            desc.innerText = "La unión de sus muestras libera una energía constante. Son una pareja con una dinámica metabólica vibrante.";
+        } else {
+            title.innerText = "Hibridación Superior";
+            desc.innerText = "Han logrado una fusión de secuencias que desafía las leyes de Mendel. Estabilidad termodinámica asegurada.";
+        }
+    }
+
+    fetchResult();
+</script>
+</body>
+</html>

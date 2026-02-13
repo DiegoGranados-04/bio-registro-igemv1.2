@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iGEM Quiz - Secuenciación de Amor</title>
+    <style>
+        :root { --igem-blue: #00a0e3; --igem-green: #7dc242; --dark-blue: #003366; --bg-color: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: white; width: 90%; max-width: 500px; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
+        .progress-container { width: 100%; height: 8px; background: #eee; border-radius: 10px; margin-bottom: 20px; }
+        .progress-bar { height: 100%; background: linear-gradient(to right, var(--igem-blue), var(--igem-green)); width: 10%; transition: width 0.4s ease; border-radius: 10px; }
+        .step-text { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block; }
+        h2 { color: var(--dark-blue); font-size: 20px; margin-bottom: 25px; line-height: 1.4; }
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option { padding: 18px; border: 2px solid #f0f0f0; border-radius: 15px; cursor: pointer; transition: all 0.2s ease; font-size: 15px; color: #444; line-height: 1.3; }
+        .option:hover { border-color: var(--igem-blue); background-color: #f0f9ff; transform: translateY(-2px); }
+        .option:active { transform: scale(0.98); }
+        .option b { color: var(--dark-blue); display: block; margin-bottom: 4px; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="card fade-in">
+    <span class="step-text" id="progressText">Análisis 1 de 10</span>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <h2 id="questionText">Cargando protocolo de hibridación...</h2>
+    <div class="options-container" id="optionsContainer"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBs4WUbWXBikEfdAPTwOzmmA_J8HVqMx6o",
+        authDomain: "igem-teccem.firebaseapp.com",
+        databaseURL: "https://igem-teccem-default-rtdb.firebaseio.com",
+        projectId: "igem-teccem",
+        storageBucket: "igem-teccem.firebasestorage.app",
+        messagingSenderId: "265782188525",
+        appId: "1:265782188525:web:d3cc43a6ea18badd006fe4",
+        measurementId: "G-6KHMF6Q0KM"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const questions = [
+        { q: "Si su relación fuera un tipo de enlace químico, ¿cuál sería?", a: ["Covalente", "Iónico", "Puente H"], d: ["Compartimos todo.", "Polos opuestos.", "Unión vital."], v: ["A", "B", "C"] },
+        { q: "¿Cómo manejan las mutaciones (conflictos)?", a: ["Reparación ADN", "Selección Natural", "Edición CRISPR"], d: ["Hablamos todo.", "Nos hace fuertes.", "Solución rápida."], v: ["A", "B", "C"] },
+        { q: "Si fueran un organelo celular, ¿cuál serían?", a: ["Mitocondria", "Núcleo", "Golgi"], d: ["Fuente de energía.", "Control total.", "Detalles y sorpresas."], v: ["A", "B", "C"] },
+        { q: "En un cultivo, ¿en qué fase está su amor?", a: ["Exponencial", "Estacionario", "Lag Phase"], d: ["Crecemos cada segundo.", "Equilibrio perfecto.", "Adaptándonos."], v: ["A", "B", "C"] },
+        { q: "¿Qué bioseguridad requiere su intensidad?", a: ["Nivel 1", "Nivel 2", "Nivel 4"], d: ["Sin riesgos.", "Aventureros.", "Contagiosos."], v: ["A", "B", "C"] },
+        { q: "¿Cómo fluye su comunicación?", a: ["Parácrina", "Endócrina", "Gap Junctions"], d: ["Siempre cerquita.", "Señales a distancia.", "Sin palabras."], v: ["A", "B", "C"] },
+        { q: "¿Cómo reaccionan ante el estrés (exámenes)?", a: ["Homeostasis", "Evolución", "Antioxidantes"], d: ["Calma total.", "Mejoramos bajo presión.", "Muchos besos."], v: ["A", "B", "C"] },
+        { q: "Su afinidad por los colores del Tec es:", a: ["Dominante", "Recesiva", "Codominante"], d: ["Pasión visible.", "Amor discreto.", "Ambos brillamos."], v: ["A", "B", "C"] },
+        { q: "¿Cuál es su protocolo de cita ideal?", a: ["In vitro", "In vivo", "In silico"], d: ["Lugar controlado.", "Aventura extrema.", "Noche de pelis."], v: ["A", "B", "C"] },
+        { q: "¿Máxima meta biológica de pareja?", a: ["Aumentar Fitness", "Colonia Feliz", "Especiación"], d: ["Pareja exitosa.", "Hogar estable.", "Pareja única."], v: ["A", "B", "C"] }
+    ];
+
+    let current = 0;
+    let scores = { A: 0, B: 0, C: 0 };
+
+    window.selectOption = async function(val) {
+        scores[val]++;
+        current++;
+        if (current < questions.length) {
+            loadQuestion();
+        } else {
+            const totalPoints = (scores.A * 3) + (scores.B * 2) + (scores.C * 1);
+            const percentage = Math.floor(80 + ((totalPoints - 10) / 20) * 20);
+            const winner = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+            const id = "IGEM-" + Math.floor(1000 + Math.random() * 9000);
+            
+            const userData = { type: winner, percent: percentage };
+
+            // GUARDAR EN FIREBASE (NUBE)
+            await set(ref(db, 'parejas/' + id), userData);
+            
+            // GUARDAR EN LOCAL (BACKUP)
+            localStorage.setItem(id, JSON.stringify(userData));
+            
+            window.location.href = `resultados.html?id=${id}`;
+        }
+    }
+
+    function loadQuestion() {
+        const q = questions[current];
+        document.getElementById('progressText').innerText = `Análisis ${current + 1} de 10`;
+        document.getElementById('progressBar').style.width = `${(current + 1) * 10}%`;
+        document.getElementById('questionText').innerText = q.q;
+        const container = document.getElementById('optionsContainer');
+        container.innerHTML = "";
+        q.a.forEach((opt, i) => {
+            const div = document.createElement('div');
+            div.className = 'option fade-in';
+            div.innerHTML = `<b>${opt}</b> (${q.d[i]})`;
+            div.onclick = () => selectOption(q.v[i]);
+            container.appendChild(div);
+        });
+    }
+    loadQuestion();
+</script>
+</body>
+</html>
